@@ -3,23 +3,13 @@ import cors from 'cors'
 import 'dotenv/config'
 import router from './router'
 import { connectDB } from './config/db'
+import { corsConfig } from './config/cors'
 
-connectDB()
 const app = express()
+connectDB()
 
-const allowedOrigins = ['https://lendei.netlify.app', 'http://localhost:5173']
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true)
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true)
-    }
-    return callback(new Error('No permitido por CORS'))
-  },
-  credentials: true
-}))
-
+app.use(cors(corsConfig))
+app.options('*', cors(corsConfig))
 app.use(express.json())
 app.use('/', router)
 
