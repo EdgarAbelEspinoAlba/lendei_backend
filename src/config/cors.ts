@@ -12,6 +12,8 @@ if (process.argv.includes('--api')) {
 
 export const corsConfig: CorsOptions = {
   origin: function (origin, callback) {
+    console.log('[CORS] Origen recibido:', origin)
+    console.log('[CORS] Lista blanca:', whiteList)
     if (whiteList.includes(origin)) {
       callback(null, true)
     } else {
