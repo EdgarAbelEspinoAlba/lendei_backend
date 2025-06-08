@@ -6,12 +6,14 @@ if (process.env.FRONTEND_URL) {
   whiteList.push(process.env.FRONTEND_URL)
 }
 
-if (process.argv.includes('--api')) {
-  whiteList.push(undefined)
-}
+whiteList.push(undefined)
+
+console.log('[CORS] Lista blanca:', whiteList)
 
 export const corsConfig: CorsOptions = {
   origin: function (origin, callback) {
+    console.log('[CORS] Origen recibido:', origin)
+    
     if (whiteList.includes(origin)) {
       callback(null, true)
     } else {

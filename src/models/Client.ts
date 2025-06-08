@@ -16,6 +16,8 @@ export interface IClient extends Document {
     ciudad: string
     estado: string
     cp: string
+    telefono: string
+    celular: string
     email: string
     password: string
     adeudo: number
@@ -35,7 +37,7 @@ const clientSchema = new Schema({
     },
     credito:{
         type: String,
-        required: true,
+        required: false,
         trim: true
     },
     rfc:{
@@ -99,6 +101,16 @@ const clientSchema = new Schema({
         default: ''
     },
     cp:{
+        type: String,
+        required: false,
+        default: ''
+    },
+    telefono:{
+        type: String,
+        required: false,
+        default: ''
+    },
+    celular:{
         type: String,
         required: false,
         default: ''
