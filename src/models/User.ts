@@ -5,6 +5,7 @@ export interface IUser extends Document {
     name:string
     role:Number
     email:string
+    phone?:string
     password:string
     description:string
     image:string
@@ -35,6 +36,13 @@ const userSchema = new Schema({
         trim: true,
         lowercase: true,
         unique:true
+    },
+    phone:{
+        type: String,
+        trim: true,
+        unique: true,
+        sparse: true,
+        set: (value: string | undefined) => value?.replace(/\D/g, '')
     },
     password:{
         type: String,
