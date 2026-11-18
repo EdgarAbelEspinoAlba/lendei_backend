@@ -5,18 +5,40 @@ import { handleInputErrors } from './middleware/validation'
 import { authenticate } from './middleware/auth'
 
 const router = Router()
+const isValidPhone = (value: string) =>
+    /^\+?[\d\s().-]{7,20}$/.test(value) && (value.match(/\d/g) || []).length >= 7
 
 /** Autentificación y registro **/
 router.post('/auth/register',
     body('handle').notEmpty().withMessage('El handle no puede ir vacío'),
     body('name').notEmpty().withMessage('El Nombre no puede ir vacío'),
     body('email').isEmail().withMessage('Correo no válido'),
+    body('phone').optional({ checkFalsy: true }).custom((value) => {
+        if (typeof value !== 'string' || !isValidPhone(value.trim())) {
+            throw new Error('Teléfono no válido')
+        }
+        return true
+    }),
     body('password').isLength({ min: 8 }).withMessage('El password no cumple con la longitud mínima'),
     handleInputErrors,
     createAccount)
 
 router.post('/auth/login',
-    body('email').isEmail().withMessage('Correo no válido'),
+    body().custom((_, { req }) => {
+        const identifier = req.body.identifier ?? req.body.email ?? req.body.phone
+        if (typeof identifier !== 'string' || !identifier.trim()) {
+            throw new Error('El correo o teléfono es obligatorio')
+        }
+
+        const value = identifier.trim()
+        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+        const isPhone = isValidPhone(value)
+        if (!isEmail && !isPhone) {
+            throw new Error('Ingresa un correo o teléfono válido')
+        }
+
+        return true
+    }),
     body('password').notEmpty().withMessage('El password es obligatorio'),
     handleInputErrors,
     login
@@ -29,6 +51,12 @@ router.get('/user',
 
 router.patch('/user',
     body('handle').notEmpty().withMessage('El handle no puede ir vacío'),
+    body('phone').optional({ checkFalsy: true }).custom((value) => {
+        if (typeof value !== 'string' || !isValidPhone(value.trim())) {
+            throw new Error('Teléfono no válido')
+        }
+        return true
+    }),
     handleInputErrors,
     authenticate,
     updateProfile

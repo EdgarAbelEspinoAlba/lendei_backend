@@ -10,12 +10,15 @@ import { v4 as uuid } from 'uuid'
 import Client from '../models/Client'
 
 export const createAccount = async (request: Request, response: Response) => {
-    const { email, password } = request.body
+    const { email, password, phone } = request.body
     const handle = slug(request.body.handle, '')
     const userExists = await User.findOne({ email })
     const handleExists = await User.findOne({ handle })
+    const phoneExists = phone
+        ? await User.findOne({ phone: phone.replace(/\D/g, '') })
+        : null
 
-    if (userExists || handleExists) {
+    if (userExists || handleExists || phoneExists) {
         const errorUserFind = new Error('Usuario ya creado anteriormente ó no disponible')
         response.status(409).json({ error: errorUserFind.message })
         return
@@ -30,8 +33,14 @@ export const createAccount = async (request: Request, response: Response) => {
 }
 
 export const login = async (request: Request, response: Response) => {
-    const { email, password } = request.body
-    const user = await User.findOne({ email })
+    const { password } = request.body
+    const identifier = (request.body.identifier ?? request.body.email ?? request.body.phone).trim()
+    const isEmail = identifier.includes('@')
+    const user = await User.findOne(
+        isEmail
+            ? { email: identifier.toLowerCase() }
+            : { phone: identifier.replace(/\D/g, '') }
+    )
     if (!user) {
         const errorUserNotFound = new Error('El usuario no se encontró')
         response.status(404).json({ error: errorUserNotFound.message })
@@ -56,13 +65,23 @@ export const getUser = async (request: Request, response: Response) => {
 
 export const updateProfile = async (request: Request, response: Response) => {
     try {
-        const { description, links } = request.body
+        const { description, links, phone } = request.body
         const handle = slug(request.body.handle, '')
         const handleExists = await User.findOne({ handle })
         if (handleExists && handleExists.email !== request.user.email) {
             const errorUserFind = new Error('Usuario ya creado anteriormente ó no disponible')
             response.status(409).json({ error: errorUserFind.message })
             return
+        }
+
+        if (phone) {
+            const normalizedPhone = phone.replace(/\D/g, '')
+            const phoneExists = await User.findOne({ phone: normalizedPhone, _id: { $ne: request.user._id } })
+            if (phoneExists) {
+                response.status(409).json({ error: 'El teléfono ya está asociado a otra cuenta' })
+                return
+            }
+            request.user.phone = normalizedPhone
         }
 
         request.user.description = description
